@@ -26,6 +26,8 @@ class ImagensController extends Controller
 
         $imagens = Midia::query()->daGaleria()
             ->when($request->filled('colecao'), fn ($q) => $q->where('colecao', $request->string('colecao')))
+            // `perfil`: o CampoDeImagem de capa só oferece capa (foto de 1600 px não tem o recorte).
+            ->when($request->filled('perfil'), fn ($q) => $q->where('perfil', $request->string('perfil')))
             ->with('usos.usuario')
             ->latest('id')
             ->limit((int) config('midia.rotas.galeria_maximo', 200))

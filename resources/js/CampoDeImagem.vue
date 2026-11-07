@@ -47,7 +47,7 @@ function escolher(imagem) {
         </div>
         <p v-if="ajuda || erro" :id="id + '-ajuda'" :class="erro ? 'mc-erro' : 'mc-ajuda'" :role="erro ? 'alert' : undefined">{{ erro || ajuda }}</p>
         <GaleriaDeImagens :aberto="aberto" :url-lista="urlLista" :url-envio="urlEnvio" :perfil="perfil" :colecao="colecao"
-                          :limite-mb="limiteMb" :titulo="rotulo" @fechar="aberto = false" @escolher="escolher" />
+                          :limite-mb="limiteMb" :titulo="rotulo" so-do-perfil @fechar="aberto = false" @escolher="escolher" />
     </div>
 </template>
 

@@ -61,6 +61,17 @@ class RotasTest extends TestCase
             ->assertStatus(422)->assertJsonPath('errors.arquivo.0', 'A imagem passa do limite de 0 MB.');
     }
 
+    public function test_galeria_filtra_pelo_perfil_quando_pedido(): void
+    {
+        $this->entrar()->postJson('/painel/midia/imagens', ['arquivo' => $this->fotoUpload(), 'perfil' => 'foto'])->assertCreated();
+        $capa = $this->entrar()->postJson('/painel/midia/imagens', ['arquivo' => $this->fotoUpload(), 'perfil' => 'capa'])->assertCreated();
+
+        $this->entrar()->getJson('/painel/midia/imagens')->assertJsonCount(2, 'imagens');
+        $this->entrar()->getJson('/painel/midia/imagens?perfil=capa')
+            ->assertJsonCount(1, 'imagens')
+            ->assertJsonPath('imagens.0.uuid', $capa->json('uuid'));
+    }
+
     public function test_galeria_respeita_o_escopo(): void
     {
         $this->noEscopo('a');

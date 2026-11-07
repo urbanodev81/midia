@@ -3,6 +3,10 @@
 ## [Não lançado]
 
 ### Adicionado
+- **v0.2.2:** galeria filtra por `perfil` (`?perfil=capa`; o `CampoDeImagem` só oferece imagem do
+  próprio perfil, então capa não recebe foto sem recorte). `GaleriaDeImagens`: slot `passo2` para
+  campos do sistema, `tituloPasso2`, `rotuloUsar`, `soDoPerfil`, item sem `uuid` (chave na `url`) e
+  `selo` no cartão.
 - **v0.2.2:** `midia.storage_link` (padrão `true`): com `false`, para quem serve `/storage/` por alias
   no nginx, o `midia:instalar` não cria o link e o `midia:conferir` não cobra. O `midia:instalar`
   não para mais quando o `storage:link` falha: avisa e segue.

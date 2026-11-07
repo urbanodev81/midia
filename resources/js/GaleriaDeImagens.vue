@@ -9,6 +9,11 @@
  * (ver README), com as do sistema como reserva.
  *
  * Emite `escolher` com { uuid, url, descricao, largura, altura, nome }.
+ *
+ * Slot `passo2` (recebe `{ imagem }`): campos do sistema abaixo da descrição
+ * (ex.: tamanho e posição no texto). O estado deles é do sistema, que junta ao
+ * que vier no `escolher`. Item da lista sem `uuid` (arquivo que o sistema lista
+ * por conta própria) vale: a chave cai na `url`. `selo` no item vira etiqueta.
  */
 import { computed, nextTick, ref, watch } from 'vue';
 
@@ -20,7 +25,11 @@ const props = defineProps({
     colecao: { type: String, default: null },
     limiteMb: { type: Number, default: 8 },
     pedirDescricao: { type: Boolean, default: true },
+    // Lista só as imagens do `perfil` (campo de capa/logo: tamanho certo).
+    soDoPerfil: { type: Boolean, default: false },
     titulo: { type: String, default: 'Imagens' },
+    tituloPasso2: { type: String, default: 'Descreva a imagem' },
+    rotuloUsar: { type: String, default: 'Usar esta imagem' },
 });
 const emit = defineEmits(['fechar', 'escolher']);
 
@@ -46,8 +55,11 @@ function cabecalhos() {
 }
 
 function comColecao(url) {
-    if (!props.colecao) return url;
-    return url + (url.includes('?') ? '&' : '?') + 'colecao=' + encodeURIComponent(props.colecao);
+    const filtros = new URLSearchParams();
+    if (props.colecao) filtros.set('colecao', props.colecao);
+    if (props.soDoPerfil) filtros.set('perfil', props.perfil);
+    const qs = filtros.toString();
+    return qs ? url + (url.includes('?') ? '&' : '?') + qs : url;
 }
 
 async function carregar() {
@@ -111,7 +123,7 @@ async function enviar(evento) {
         if (r.status === 413) throw new Error(`A imagem passa do limite de ${props.limiteMb} MB.`);
         const corpo = await r.json().catch(() => ({}));
         if (!r.ok) throw new Error(corpo.errors?.arquivo?.[0] ?? corpo.message ?? 'A imagem não subiu. Tente de novo.');
-        imagens.value = [corpo, ...(imagens.value ?? []).filter((i) => i.uuid !== corpo.uuid)];
+        imagens.value = [corpo, ...(imagens.value ?? []).filter((i) => (i.uuid ?? i.url) !== corpo.uuid)];
         escolher(corpo);
     } catch (e) {
         erroEnvio.value = e.message && !/^\d+$/.test(e.message) ? e.message : 'A imagem não subiu. Tente de novo.';
@@ -133,7 +145,7 @@ function confirmar() {
 <template>
     <dialog ref="dialogo" class="midia-galeria" :aria-label="titulo" @close="emit('fechar')" @cancel.prevent="emit('fechar')">
         <header class="mg-topo">
-            <h2>{{ escolhida ? 'Descreva a imagem' : titulo }}</h2>
+            <h2>{{ escolhida ? tituloPasso2 : titulo }}</h2>
             <button type="button" class="mg-fechar" aria-label="Fechar" @click="emit('fechar')">
                 <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" /></svg>
             </button>
@@ -147,8 +159,9 @@ function confirmar() {
                        class="mg-campo" :aria-invalid="erroDescricao ? 'true' : 'false'" aria-describedby="mg-descricao-ajuda" />
                 <p id="mg-descricao-ajuda" class="mg-ajuda">É o que o leitor de tela lê. {{ escolhida.descricao ? 'Veio da última vez que ela foi usada.' : '' }}</p>
                 <p v-if="erroDescricao" class="mg-erro" role="alert">{{ erroDescricao }}</p>
+                <slot name="passo2" :imagem="escolhida" />
                 <div class="mg-acoes">
-                    <button type="submit" class="mg-botao">Usar esta imagem</button>
+                    <button type="submit" class="mg-botao">{{ rotuloUsar }}</button>
                     <button type="button" class="mg-link" @click="escolhida = null">Escolher outra</button>
                 </div>
             </div>
@@ -170,9 +183,10 @@ function confirmar() {
                 <p v-else-if="erroLista" class="mg-erro" role="alert">{{ erroLista }}</p>
                 <p v-else-if="filtradas.length === 0" class="mg-ajuda">{{ busca ? 'Nenhuma imagem com esse nome.' : 'Nenhuma imagem ainda. Suba a primeira.' }}</p>
                 <ul v-else class="mg-grade" aria-label="Imagens">
-                    <li v-for="img in filtradas" :key="img.uuid">
+                    <li v-for="img in filtradas" :key="img.uuid ?? img.url">
                         <button type="button" class="mg-cartao" @click="escolher(img)">
                             <img :src="img.url" alt="" loading="lazy" />
+                            <span v-if="img.selo" class="mg-selo">{{ img.selo }}</span>
                             <span class="mg-legenda">
                                 <strong>{{ img.descricao || img.nome || 'Sem nome' }}</strong>
                                 <span>{{ img.usos?.length ? 'Usada em ' + img.usos.join(', ') : 'Ainda não usada' }}</span>
@@ -217,9 +231,10 @@ function confirmar() {
 .mg-grade { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem; margin: 0; padding: 0; list-style: none; }
 @media (min-width: 640px) { .mg-grade { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (min-width: 1024px) { .mg-grade { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-.mg-cartao { display: block; width: 100%; padding: 0; overflow: hidden; border: 1px solid var(--mg-linha); border-radius: 0.375rem; background: var(--mg-fundo); color: inherit; text-align: left; cursor: pointer; }
+.mg-cartao { position: relative; display: block; width: 100%; padding: 0; overflow: hidden; border: 1px solid var(--mg-linha); border-radius: 0.375rem; background: var(--mg-fundo); color: inherit; text-align: left; cursor: pointer; }
 .mg-cartao:hover { border-color: var(--mg-suave); }
 .mg-cartao img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
+.mg-selo { position: absolute; top: 0.375rem; left: 0.375rem; padding: 0 0.375rem; border-radius: 0.25rem; background: var(--mg-fundo); color: var(--mg-texto); font-size: 0.6875rem; font-weight: 600; }
 .mg-legenda { display: block; padding: 0.375rem 0.5rem; font-size: 0.75rem; }
 .mg-legenda strong, .mg-legenda span { display: block; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .mg-legenda span { color: var(--mg-suave); }
