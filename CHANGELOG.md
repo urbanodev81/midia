@@ -3,6 +3,9 @@
 ## [Não lançado]
 
 ### Adicionado
+- **v0.2.1:** `midia.pastas_antigas` — pastas de imagens que já existiam antes do pacote e foram
+  registradas em `midias` sem mover o arquivo; o `Midia::uuidsNoTexto()` passa a reconhecer o
+  endereço antigo dentro do texto (sem isso, a faxina acharia "sem uso" a imagem que está no ar).
 - **Arquivo privado (v0.2):** `GuardarArquivo` — tipo pelo conteúdo (`finfo`) contra a lista
   `midia.arquivos.tipos` (PDF, ZIP, JPG, PNG, WebP), SVG/HTML/XML/JS/PHP recusados mesmo se
   configurados, extensão gravada pelo conteúdo, foto regravada pelo perfil novo `original`

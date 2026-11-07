@@ -126,6 +126,12 @@ $texto->sincronizarMidias('capa', [$request->input('capa_uuid')]);
 $texto->sincronizarMidias('corpo', Midia::uuidsNoTexto($texto->corpo_html));
 ```
 
+**Imagens de antes do pacote.** Dá para registrar em `midias` uma imagem que já
+está no ar sem mover o arquivo (linha com o mesmo `disco` e `caminho`). Para o
+`uuidsNoTexto()` achar o endereço antigo no texto, ponha a pasta em
+`midia.pastas_antigas` (ex.: `['blog']` para `/storage/blog/2026/11/<uuid>.webp`).
+O nome do arquivo precisa ser o uuid da linha.
+
 Aceita a `Midia`, o uuid ou a URL. Imagem de outro cliente é ignorada. Soft
 delete (arquivar) mantém o uso; só a exclusão de verdade solta. Imagem que
 estava na quarentena e voltou a ser usada é restaurada na hora.

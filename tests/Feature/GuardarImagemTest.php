@@ -45,6 +45,19 @@ class GuardarImagemTest extends TestCase
         $this->assertSame([], Midia::uuidsNoTexto(null));
     }
 
+    public function test_pastas_antigas_contam_no_texto_so_quando_configuradas(): void
+    {
+        $a = '0196f3a1-0000-7000-8000-00000000000a';
+        $b = '0196f3a1-0000-7000-8000-00000000000b';
+        $html = "<img src=\"/storage/blog/2026/11/{$a}.webp\"><img src=\"/storage/site/{$b}.jpg\">"
+            .'<img src="/storage/outra/0196f3a1-0000-7000-8000-00000000000c.jpg">';
+
+        $this->assertSame([], Midia::uuidsNoTexto($html));
+
+        config(['midia.pastas_antigas' => ['blog', '/site/']]);
+        $this->assertSame([$a, $b], Midia::uuidsNoTexto($html));
+    }
+
     public function test_uuid_da_url_e_o_do_arquivo_mesmo_com_escopo_em_uuid(): void
     {
         $tenant = '11111111-1111-4111-8111-111111111111';

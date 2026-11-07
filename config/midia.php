@@ -10,6 +10,11 @@ return [
     'disco' => env('MIDIA_DISCO', 'public'),
     'pasta' => 'midias',
 
+    // Pastas (no mesmo disco) de imagens que JÁ existiam antes do pacote e foram
+    // registradas em `midias` sem mover o arquivo — ex.: ['blog', 'site']. Servem
+    // para o `Midia::uuidsNoTexto()` reconhecer o endereço antigo dentro do texto.
+    'pastas_antigas' => [],
+
     // Teto do arquivo enviado. O `midia:conferir` compara com o
     // upload_max_filesize e o post_max_size do PHP (e o nginx precisa de
     // client_max_body_size maior que isto, senão a tela recebe 413).

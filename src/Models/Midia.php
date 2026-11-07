@@ -180,7 +180,12 @@ class Midia extends Model
             return [];
         }
 
-        $pasta = preg_quote(trim((string) config('midia.pasta', 'midias'), '/'), '#');
+        // A pasta do pacote e as `pastas_antigas` (imagens registradas sem mover, de antes do pacote).
+        $pastas = array_filter(array_map(
+            fn ($p) => preg_quote(trim((string) $p, '/'), '#'),
+            [config('midia.pasta', 'midias'), ...(array) config('midia.pastas_antigas', [])],
+        ), fn ($p) => $p !== '');
+        $pasta = '(?:'.implode('|', $pastas).')';
         preg_match_all("#/{$pasta}/(?:[A-Za-z0-9_-]+/)*([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.(?:webp|jpg|png)#i", $texto, $m);
 
         return array_values(array_unique(array_map('strtolower', $m[1])));
