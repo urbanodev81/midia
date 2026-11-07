@@ -43,7 +43,9 @@ class Conferir extends Command
         $ok(Schema::hasTable('midias') && Schema::hasTable('midia_usos'), 'tabelas midias e midia_usos', 'php artisan migrate');
 
         $disco = (string) config('midia.disco', 'public');
-        if ($disco === 'public') {
+        if ($disco === 'public' && ! config('midia.storage_link', true)) {
+            $this->line('  <comment>lembre</comment> midia.storage_link = false: o servidor web precisa servir /storage/ a partir de storage/app/public (confira abrindo uma imagem).');
+        } elseif ($disco === 'public') {
             $ok(is_link(public_path('storage')) || is_dir(public_path('storage')), 'public/storage aponta para o disco público', 'php artisan storage:link');
         }
 

@@ -26,6 +26,15 @@ class ComandosTest extends TestCase
             ->run();
     }
 
+    public function test_storage_servido_pelo_nginx_nao_cobra_o_link(): void
+    {
+        config(['midia.storage_link' => false]);
+        $this->artisan('midia:conferir')
+            ->expectsOutputToContain('midia.storage_link = false')
+            ->doesntExpectOutputToContain('public/storage aponta')
+            ->run();
+    }
+
     public function test_conferir_acusa_escopo_obrigatorio_sem_resolver(): void
     {
         config(['midia.escopo.obrigatorio' => true]);

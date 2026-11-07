@@ -34,8 +34,13 @@ class Instalar extends Command
             $this->call('migrate', ['--path' => realpath(__DIR__.'/../../database/migrations'), '--realpath' => true, '--force' => true]);
         }
 
-        if (config('midia.disco') === 'public' && ! file_exists(public_path('storage'))) {
-            $this->call('storage:link');
+        if (config('midia.disco') === 'public' && config('midia.storage_link', true) && ! file_exists(public_path('storage'))) {
+            try {
+                $this->call('storage:link');
+            } catch (\Throwable $e) {
+                // Não para a instalação: o resto já foi feito e o `midia:conferir` mostra a falta.
+                $this->warn('  não deu para criar public/storage ('.$e->getMessage().'). Crie o link à mão, ou sirva /storage/ pelo servidor web e ponha midia.storage_link = false.');
+            }
         }
 
         $this->newLine();

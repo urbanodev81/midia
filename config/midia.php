@@ -8,6 +8,11 @@ return [
     // Onde a imagem tratada fica. Imagem pública = disco com URL (o `public`
     // precisa do `php artisan storage:link`).
     'disco' => env('MIDIA_DISCO', 'public'),
+
+    // false quando o servidor web já serve /storage/ direto da pasta (alias no
+    // nginx), sem o link public/storage: o instalar não cria o link e o
+    // conferir não cobra.
+    'storage_link' => env('MIDIA_STORAGE_LINK', true),
     'pasta' => 'midias',
 
     // Pastas (no mesmo disco) de imagens que JÁ existiam antes do pacote e foram

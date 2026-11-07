@@ -3,6 +3,9 @@
 ## [Não lançado]
 
 ### Adicionado
+- **v0.2.2:** `midia.storage_link` (padrão `true`): com `false`, para quem serve `/storage/` por alias
+  no nginx, o `midia:instalar` não cria o link e o `midia:conferir` não cobra. O `midia:instalar`
+  não para mais quando o `storage:link` falha: avisa e segue.
 - **v0.2.1:** `midia.pastas_antigas` — pastas de imagens que já existiam antes do pacote e foram
   registradas em `midias` sem mover o arquivo; o `Midia::uuidsNoTexto()` passa a reconhecer o
   endereço antigo dentro do texto (sem isso, a faxina acharia "sem uso" a imagem que está no ar).
