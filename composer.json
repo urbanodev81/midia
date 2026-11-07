@@ -1,0 +1,44 @@
+{
+    "name": "urbanodev/midia",
+    "description": "Upload de imagem da casa: regrava em GD (sem EXIF/GPS, foto em pé), tipo pelo conteúdo, tabela com medidas, escopo por cliente, registro de uso e faxina em quarentena.",
+    "type": "library",
+    "license": "MIT",
+    "require": {
+        "php": "^8.4",
+        "ext-gd": "*",
+        "illuminate/console": "^12.0 || ^13.0",
+        "illuminate/database": "^12.0 || ^13.0",
+        "illuminate/filesystem": "^12.0 || ^13.0",
+        "illuminate/http": "^12.0 || ^13.0",
+        "illuminate/support": "^12.0 || ^13.0"
+    },
+    "suggest": {
+        "ext-exif": "Sem ela a foto de celular não é endireitada (a orientação vem só no EXIF)."
+    },
+    "require-dev": {
+        "orchestra/testbench": "^11.0",
+        "phpunit/phpunit": "^12.0"
+    },
+    "autoload": {
+        "psr-4": {
+            "UrbanoDev\\Midia\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "UrbanoDev\\Midia\\Tests\\": "tests/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": [
+                "UrbanoDev\\Midia\\MidiaServiceProvider"
+            ]
+        }
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true,
+    "config": {
+        "sort-packages": true
+    }
+}
