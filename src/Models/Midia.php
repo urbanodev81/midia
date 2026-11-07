@@ -94,9 +94,14 @@ class Midia extends Model
     /** Pública: o endereço do disco. Privada: a rota `midia.baixar` (com login). */
     public function url(): string
     {
-        return $this->privado
-            ? Pacote::urlDeDownload($this)
-            : Storage::disk($this->disco)->url($this->caminho);
+        if ($this->privado) {
+            return Pacote::urlDeDownload($this);
+        }
+
+        $url = Storage::disk($this->disco)->url($this->caminho);
+
+        // `url_relativa`: só o caminho (/storage/...), para gravar dentro de texto sem amarrar ao domínio.
+        return config('midia.url_relativa') && ($caminho = parse_url($url, PHP_URL_PATH)) ? $caminho : $url;
     }
 
     public function ehImagem(): bool

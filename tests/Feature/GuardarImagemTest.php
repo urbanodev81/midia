@@ -45,6 +45,16 @@ class GuardarImagemTest extends TestCase
         $this->assertSame([], Midia::uuidsNoTexto(null));
     }
 
+    public function test_url_relativa_tira_o_dominio(): void
+    {
+        Storage::fake('public', ['url' => 'https://exemplo.com.br/storage']);
+        $midia = ($this->app->make(GuardarImagem::class))($this->fotoUpload());
+
+        $this->assertStringStartsWith('https://exemplo.com.br/storage/midias/', $midia->url());
+        config(['midia.url_relativa' => true]);
+        $this->assertStringStartsWith('/storage/midias/', $midia->url());
+    }
+
     public function test_pastas_antigas_contam_no_texto_so_quando_configuradas(): void
     {
         $a = '0196f3a1-0000-7000-8000-00000000000a';

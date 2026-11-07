@@ -3,6 +3,7 @@
 ## [Não lançado]
 
 ### Adicionado
+- **v0.2.2:** `midia.url_relativa`: `$midia->url()` sem o domínio, para gravar dentro de texto.
 - **v0.2.2:** galeria filtra por `perfil` (`?perfil=capa`; o `CampoDeImagem` só oferece imagem do
   próprio perfil, então capa não recebe foto sem recorte). `GaleriaDeImagens`: slot `passo2` para
   campos do sistema, `tituloPasso2`, `rotuloUsar`, `soDoPerfil`, item sem `uuid` (chave na `url`) e

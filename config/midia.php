@@ -13,6 +13,10 @@ return [
     // nginx), sem o link public/storage: o instalar não cria o link e o
     // conferir não cobra.
     'storage_link' => env('MIDIA_STORAGE_LINK', true),
+
+    // true: `$midia->url()` devolve só o caminho (/storage/midias/...), sem o
+    // domínio do APP_URL. Use quando a URL vai para dentro de texto (blog).
+    'url_relativa' => false,
     'pasta' => 'midias',
 
     // Pastas (no mesmo disco) de imagens que JÁ existiam antes do pacote e foram
