@@ -60,7 +60,7 @@ final class Escopo
         $escopo = self::atual();
 
         if ($escopo === null && self::obrigatorio()) {
-            throw new ImagemRecusada('Não foi possível identificar a conta para guardar a imagem. Entre de novo e tente outra vez.');
+            throw new ImagemRecusada('Não foi possível identificar a conta para guardar o arquivo. Entre de novo e tente outra vez.');
         }
 
         return $escopo;

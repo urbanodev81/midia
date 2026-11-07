@@ -27,6 +27,7 @@ class MidiaServiceProvider extends ServiceProvider
                 Console\Conferir::class,
                 Console\Faxinar::class,
                 Console\Restaurar::class,
+                Console\Expurgar::class,
             ]);
         }
     }

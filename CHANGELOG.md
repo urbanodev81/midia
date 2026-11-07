@@ -3,6 +3,24 @@
 ## [Não lançado]
 
 ### Adicionado
+- **Arquivo privado (v0.2):** `GuardarArquivo` — tipo pelo conteúdo (`finfo`) contra a lista
+  `midia.arquivos.tipos` (PDF, ZIP, JPG, PNG, WebP), SVG/HTML/XML/JS/PHP recusados mesmo se
+  configurados, extensão gravada pelo conteúdo, foto regravada pelo perfil novo `original`
+  (formato `mesmo`, sem reduzir), limite próprio de 20 MB, disco privado, prazo `expurgo_em`.
+- Rota `midia.baixar` (no `Midia::rotas()`): 404 fora do escopo, inválido ou na quarentena;
+  permissão `midia.arquivos.permissao`; regra do sistema por `Midia::autorizarDownloadCom()` ou
+  `midia.arquivos.autorizar` (só `true` libera). `Midia::resposta()`: attachment, `nosniff`,
+  `no-store`, CSP com sandbox; `?ver=1` abre imagem e PDF na aba.
+- `Visibilidade::privar()`/`publicar()`: muda o arquivo de disco (o link público morre).
+- `midia:expurgar` (lista; apaga só com `--executar`) e, no `midia:conferir`, disco privado
+  fora da raiz web e aviso de regra de download ausente.
+- `ArquivoRecusado` (a `ImagemRecusada` passa a ser um caso dela); `qualidade` por perfil.
+
+### Mudado
+- Coluna `mime` com 120 letras, `largura`/`altura` anuláveis, colunas `privado` e `expurgo_em`
+  (na própria migration: a v0.1 não foi instalada em lugar nenhum).
+- A galeria lista só imagem pública; a faxina ignora o perfil `arquivo`; a quarentena
+  confere a cópia e para com erro se ela não bater, em vez de seguir calada.
 - `TratarImagem`: tipo pelo conteúdo (só JPEG, PNG, WebP), teto de 25 MP antes de abrir,
   as 8 orientações do EXIF (inclusive as espelhadas 2, 4, 5 e 7), reencode sem metadado,
   perfis `foto` (WebP 1600), `capa` (JPEG 1200×630 no centro) e `logo` (PNG 600, transparente).

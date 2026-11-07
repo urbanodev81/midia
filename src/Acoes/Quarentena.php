@@ -5,6 +5,7 @@ namespace UrbanoDev\Midia\Acoes;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Storage;
 use UrbanoDev\Midia\Models\Midia;
+use UrbanoDev\Midia\Suporte\Transferencia;
 
 /**
  * Faxina sem apagar (regra da casa: conteúdo não se exclui).
@@ -12,6 +13,9 @@ use UrbanoDev\Midia\Models\Midia;
  * Imagem sem nenhum uso registrado e mais velha que a carência vai para o
  * disco da quarentena (fora do ar), com o mesmo caminho relativo. A linha
  * fica, marcada com `quarentena_em`. `restaurar()` devolve.
+ *
+ * Só imagem guardada por `GuardarImagem`. Arquivo (`GuardarArquivo`, perfil
+ * `arquivo`) pertence a um registro do sistema e nunca entra na faxina.
  */
 final class Quarentena
 {
@@ -22,6 +26,7 @@ final class Quarentena
 
         return Midia::semEscopo()
             ->whereNull('quarentena_em')
+            ->where('perfil', '!=', Midia::PERFIL_ARQUIVO)
             ->where('created_at', '<', $limite)
             ->whereDoesntHave('usos')
             ->orderBy('id')
@@ -40,7 +45,7 @@ final class Quarentena
             return;
         }
 
-        $this->transferir(Storage::disk($midia->disco), $this->disco(), $midia->caminho, $this->destino($midia));
+        Transferencia::mover(Storage::disk($midia->disco), $this->disco(), $midia->caminho, $this->destino($midia));
         $midia->forceFill(['quarentena_em' => now()])->save();
     }
 
@@ -50,33 +55,17 @@ final class Quarentena
             return;
         }
 
-        $this->transferir($this->disco(), Storage::disk($midia->disco), $this->destino($midia), $midia->caminho);
+        Transferencia::mover($this->disco(), Storage::disk($midia->disco), $this->destino($midia), $midia->caminho);
         $midia->forceFill(['quarentena_em' => null])->save();
     }
 
-    private function disco(): \Illuminate\Contracts\Filesystem\Filesystem
+    public function disco(): \Illuminate\Contracts\Filesystem\Filesystem
     {
         return Storage::disk((string) config('midia.faxina.disco', 'local'));
     }
 
-    private function destino(Midia $midia): string
+    public function destino(Midia $midia): string
     {
         return trim((string) config('midia.faxina.pasta', 'midia-quarentena'), '/').'/'.$midia->caminho;
-    }
-
-    /** Copia, confere e só então tira da origem. Arquivo que já sumiu não trava a faxina. */
-    private function transferir($de, $para, string $origem, string $destino): void
-    {
-        $conteudo = $de->get($origem);
-
-        if ($conteudo === null) {
-            return;
-        }
-
-        $para->put($destino, $conteudo);
-
-        if ($para->get($destino) === $conteudo) {
-            $de->delete($origem);
-        }
     }
 }

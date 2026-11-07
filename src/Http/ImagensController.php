@@ -24,7 +24,7 @@ class ImagensController extends Controller
     {
         $this->autorizar();
 
-        $imagens = Midia::query()->ativas()
+        $imagens = Midia::query()->daGaleria()
             ->when($request->filled('colecao'), fn ($q) => $q->where('colecao', $request->string('colecao')))
             ->with('usos.usuario')
             ->latest('id')

@@ -47,6 +47,7 @@ class Instalar extends Command
         $this->line('  2. Nos models que mostram imagem: use \\UrbanoDev\\Midia\\Concerns\\UsaMidias e chame sincronizarMidias() ao salvar.');
         $this->line('  3. Faxina (opcional): agende `midia:faxinar --executar`. Ela move para a quarentena, não apaga.');
         $this->line('  4. Sistema com cliente: midia.escopo.resolver + midia.escopo.obrigatorio=true ANTES de subir a primeira imagem.');
+        $this->line('  5. Arquivo privado: GuardarArquivo no controller do sistema; a regra de quem baixa vai em midia.arquivos.autorizar.');
 
         return $resultado;
     }

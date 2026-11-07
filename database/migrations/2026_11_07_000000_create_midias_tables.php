@@ -19,9 +19,11 @@ return new class extends Migration
             $table->string('colecao', 60)->nullable();
             $table->string('disco', 40);
             $table->string('caminho');
-            $table->string('mime', 40);
-            $table->unsignedInteger('largura');
-            $table->unsignedInteger('altura');
+            // Tipo pelo CONTEÚDO, nunca pela extensão (o do docx tem 71 letras).
+            $table->string('mime', 120);
+            // Nulas em arquivo que não é imagem (PDF, ZIP).
+            $table->unsignedInteger('largura')->nullable();
+            $table->unsignedInteger('altura')->nullable();
             $table->unsignedInteger('bytes');
             $table->char('sha256', 64);
             $table->string('nome_original')->nullable();
@@ -29,12 +31,17 @@ return new class extends Migration
             $table->string('descricao', 300)->nullable();
             // Inteiro ou uuid, conforme o sistema.
             $table->string('user_id', 36)->nullable();
+            // Privado = disco fora da raiz web; só sai pela rota com autorização.
+            $table->boolean('privado')->default(false);
             $table->timestamp('quarentena_em')->nullable();
+            // Prazo de guarda (LGPD). Nulo = fica. Só `midia:expurgar --executar` apaga.
+            $table->timestamp('expurgo_em')->nullable();
             $table->timestamps();
 
             $table->index([$escopo, 'colecao']);
             $table->index(['quarentena_em', 'created_at']);
             $table->index('sha256');
+            $table->index('expurgo_em');
         });
 
         Schema::create('midia_usos', function (Blueprint $table) {

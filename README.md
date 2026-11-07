@@ -16,14 +16,15 @@ experiência do urbisdev (galeria, recorte, medidas), a conferência por conteú
 e a faxina com carência do Synapse, e o modelo de arquivo do BHD. GD puro, sem
 Imagick: roda no cPanel.
 
-**v0.1 cobre imagem pública.** Arquivo privado (PDF, anexo com rota autorizada)
-vem na v0.2.
+**v0.2 cobre imagem pública e arquivo privado** (PDF, ZIP, foto em alta): disco
+fora da raiz web, download só pela rota autorizada, troca entre público e
+privado que muda o arquivo de disco, e prazo de guarda (LGPD).
 
 ## Instalar
 
 ```bash
 composer config repositories.midia vcs https://github.com/urbanodev81/midia
-composer require urbanodev/midia:0.1.0
+composer require urbanodev/midia:^0.2
 php artisan midia:instalar
 ```
 
@@ -44,8 +45,9 @@ php artisan midia:conferir
 
 Lista, item por item: gd com JPEG/PNG/WebP, exif (sem ela a foto em pé sai
 deitada), `upload_max_filesize` e `post_max_size` contra o `limite_mb` do
-pacote, as tabelas, o `public/storage` e, se o escopo for obrigatório, se há
-resolver. Sai com erro se faltar algo. **Lembrete que ele não consegue conferir:**
+pacote, as tabelas, o `public/storage`, se o disco privado está fora da raiz
+web e, se o escopo for obrigatório, se há resolver (e avisa quando falta a regra
+de download). Sai com erro se faltar algo. **Lembrete que ele não consegue conferir:**
 o nginx precisa de `client_max_body_size` maior que o `limite_mb`, senão a tela
 recebe 413.
 
@@ -160,6 +162,82 @@ cores vêm de `--midia-fundo`, `--midia-texto`, `--midia-suave`, `--midia-linha`
 (`--surface`, `--fg`, `--fg-muted`, `--border`, `--accent`, `--danger`, lidos como
 `rgb(var(--surface))`), então claro e escuro seguem o sistema sozinhos.
 
+## Arquivo privado (PDF, ZIP, foto em alta)
+
+```php
+use UrbanoDev\Midia\Acoes\GuardarArquivo;
+
+$midia = app(GuardarArquivo::class)(
+    $request->file('arquivo'),
+    colecao: 'materiais',
+    userId: $request->user()->id,
+    privado: true,                         // padrão
+    expurgoEm: now()->addMonths(24),       // opcional (LGPD); nulo = fica
+);
+
+$midia->url();   // privado: /painel/midia/arquivos/{uuid} (com login)
+```
+
+O que ele garante:
+
+- **Tipo pelo conteúdo** (`finfo`), aceito só o que está em
+  `midia.arquivos.tipos` (padrão: PDF, ZIP, JPG, PNG, WebP). A extensão gravada
+  e a do download vêm do conteúdo: `planilha.exe` que é PDF baixa como
+  `planilha.pdf`. **SVG, HTML, XML, JavaScript e PHP nunca**, nem postos na lista.
+- **Foto também é regravada** (perfil `original`: não reduz, só tira o EXIF/GPS e
+  endireita).
+- **Privado de verdade:** fica no disco `midia.arquivos.disco_privado` (padrão
+  `local`, em `storage/app/private`), sem URL pública. Sai só pela rota
+  `midia.baixar`, com `Content-Disposition: attachment`, `nosniff`,
+  `Cache-Control: private, no-store` e CSP com `sandbox`. `?ver=1` abre na aba
+  (só imagem e PDF).
+- Limite próprio: `midia.arquivos.limite_mb` (20). Confira o PHP e o nginx.
+- **Não entra na galeria nem na faxina**: o arquivo pertence a um registro do
+  sistema (material, anexo), não a um texto.
+
+### Quem baixa
+
+A rota `midia.baixar` vem no `Midia::rotas()`, dentro do grupo autenticado. Na ordem:
+
+1. uuid de outro cliente (escopo), inválido ou na quarentena → **404**;
+2. `midia.arquivos.permissao` no Gate (nulo = usa `midia.rotas.permissao`) → **403**;
+3. a regra do sistema, quando existe → **403** se não devolver `true`:
+
+```php
+// AppServiceProvider::boot() — ex.: anexo de chamado só para quem vê o chamado
+\UrbanoDev\Midia\Midia::autorizarDownloadCom(
+    fn (\UrbanoDev\Midia\Models\Midia $midia, $usuario) =>
+        Anexo::where('midia_id', $midia->id)->first()?->chamado?->visivelPara($usuario) === true
+);
+```
+
+Sem regra, basta estar logado no grupo e ser do mesmo cliente. Num sistema com
+escopo obrigatório, o `midia:conferir` avisa quando não há regra.
+
+Para servir pelo controller do próprio sistema (rota dele, regra dele):
+`return $midia->resposta();` dá a mesma resposta segura.
+
+### Público ↔ privado
+
+```php
+use UrbanoDev\Midia\Acoes\Visibilidade;
+
+app(Visibilidade::class)->privar($midia);    // o arquivo SAI do disco público: o link antigo morre na hora
+app(Visibilidade::class)->publicar($midia);  // volta para o disco público
+```
+
+Trocar só o link não basta: quem guardou o endereço público continuaria baixando
+(foi o defeito da pendência 257).
+
+### Prazo de guarda (o único comando que apaga)
+
+```bash
+php artisan midia:expurgar              # só lista o que passou do `expurgo_em`
+php artisan midia:expurgar --executar   # apaga arquivo e linha, de vez
+```
+
+Só vale para quem gravou `expurgoEm`. Não roda sozinho; agendar é decisão do sistema.
+
 ## Faxina (quarentena, nunca apaga)
 
 ```bash
@@ -184,7 +262,8 @@ Schedule::command('midia:faxinar --executar')->dailyAt('04:10');
 ## Desinstalar
 
 1. Tire as chamadas a `Midia::rotas()`, `UsaMidias` e os componentes.
-2. Guarde os arquivos: `storage/app/public/midias` e `storage/app/midia-quarentena`.
+2. Guarde os arquivos: `storage/app/public/midias`, `storage/app/private/midias`
+   (arquivos privados) e `storage/app/private/midia-quarentena`.
 3. `php artisan migrate:rollback --path=vendor/urbanodev/midia/database/migrations`
    (apaga `midias` e `midia_usos` — faça backup antes).
 4. `composer remove urbanodev/midia` e apague `config/midia.php`.
@@ -198,4 +277,6 @@ scripts/testar.sh
 Roda a suíte em SQLite e num Postgres descartável (só precisa de Docker e da
 imagem `sail-8.4/app`, que tem gd, exif e webp). Cobre as 8 orientações, a
 retirada do GPS, SVG/HTML/GIF recusados, foto-bomba, os três perfis, escopo e
-vazamento, usos, quarentena, rotas e comandos.
+vazamento, usos, quarentena, rotas e comandos; e, no arquivo privado, tipo pelo
+conteúdo, SVG/HTML/PHP recusados, cabeçalhos do download, 404 entre clientes,
+permissão e regra do sistema, troca de disco e expurgo.

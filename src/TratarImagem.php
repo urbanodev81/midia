@@ -30,14 +30,19 @@ final class TratarImagem
 
     private const EXTENSAO = ['webp' => 'webp', 'jpeg' => 'jpg', 'png' => 'png'];
 
+    private const FORMATO_DE = [IMAGETYPE_JPEG => 'jpeg', IMAGETYPE_PNG => 'png', IMAGETYPE_WEBP => 'webp'];
+
     /**
+     * `formato` => 'mesmo' regrava no formato que chegou (perfil `original`:
+     * sem reduzir, só tira o metadado e endireita).
+     *
      * @param  array{formato: string, lado_maximo?: int, largura_maxima?: int, recorte?: array{0: int, 1: int}, menor_lado_minimo?: int}  $perfil
      */
     public function __invoke(string $arquivo, array $perfil): ImagemTratada
     {
         $formato = $perfil['formato'] ?? 'webp';
 
-        if (! isset(self::MIME[$formato])) {
+        if ($formato !== 'mesmo' && ! isset(self::MIME[$formato])) {
             throw new \InvalidArgumentException("Formato de saída desconhecido: {$formato}.");
         }
 
@@ -45,6 +50,10 @@ final class TratarImagem
 
         if ($info === false || ! in_array($info[2], self::TIPOS, true)) {
             throw new ImagemRecusada('Envie uma imagem JPG, PNG ou WebP.');
+        }
+
+        if ($formato === 'mesmo') {
+            $formato = self::FORMATO_DE[$info[2]];
         }
 
         [$largura, $altura] = $info;
@@ -85,8 +94,8 @@ final class TratarImagem
 
         ob_start();
         match ($formato) {
-            'webp' => imagewebp($nova, null, (int) config('midia.qualidade.webp', 82)),
-            'jpeg' => imagejpeg($nova, null, (int) config('midia.qualidade.jpeg', 85)),
+            'webp' => imagewebp($nova, null, (int) ($perfil['qualidade'] ?? config('midia.qualidade.webp', 82))),
+            'jpeg' => imagejpeg($nova, null, (int) ($perfil['qualidade'] ?? config('midia.qualidade.jpeg', 85))),
             'png' => imagepng($nova, null, 9),
         };
         $bytes = (string) ob_get_clean();

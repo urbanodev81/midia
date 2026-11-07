@@ -45,12 +45,18 @@ return [
      * - lado_maximo: reduz até o lado maior caber, sem aumentar;
      * - largura_maxima: idem, só pela largura;
      * - recorte: [largura, altura] exatos, maior retângulo no centro;
-     * - menor_lado_minimo: abaixo disso a imagem é recusada (sai borrada).
+     * - menor_lado_minimo: abaixo disso a imagem é recusada (sai borrada);
+     * - qualidade: troca a do bloco `qualidade` só neste perfil.
+     *
+     * `original` (formato 'mesmo') é o do arquivo privado: não reduz, só
+     * regrava no formato que chegou (sai o EXIF, a foto fica em pé). Para
+     * material de imprensa em alta, que não pode perder tamanho.
      */
     'perfis' => [
         'foto' => ['formato' => 'webp', 'lado_maximo' => 1600, 'menor_lado_minimo' => 200],
         'capa' => ['formato' => 'jpeg', 'recorte' => [1200, 630], 'menor_lado_minimo' => 300],
         'logo' => ['formato' => 'png', 'largura_maxima' => 600, 'menor_lado_minimo' => 64],
+        'original' => ['formato' => 'mesmo', 'qualidade' => 92],
     ],
 
     'qualidade' => ['webp' => 82, 'jpeg' => 85],
@@ -64,6 +70,35 @@ return [
         'carencia_minutos' => 120,
         'disco' => 'local',
         'pasta' => 'midia-quarentena',
+    ],
+
+    /*
+     * Arquivo (PDF, ZIP, foto em alta): `GuardarArquivo`. Por padrão PRIVADO:
+     * vai para um disco fora da raiz web e só sai pela rota `midia.baixar`,
+     * que olha o escopo, a permissão e o `autorizar` do sistema.
+     *
+     * - tipos: tipo pelo CONTEÚDO => extensão gravada. SVG, HTML, XML,
+     *   JavaScript e PHP são recusados mesmo que alguém ponha aqui;
+     * - perfil_imagem: a foto que chega como arquivo também é regravada
+     *   (sai o GPS). Nulo guarda como veio — só se o EXIF for o objetivo;
+     * - autorizar: classe com __invoke(Midia $midia, $usuario): bool, ou
+     *   Midia::autorizarDownloadCom(fn ($midia, $usuario) => ...) num provider.
+     *   Nulo = basta passar pelo middleware do grupo e pelo escopo;
+     * - permissao: ability do Gate para baixar (nulo = `rotas.permissao`).
+     */
+    'arquivos' => [
+        'disco_privado' => env('MIDIA_DISCO_PRIVADO', 'local'),
+        'limite_mb' => 20,
+        'tipos' => [
+            'application/pdf' => 'pdf',
+            'application/zip' => 'zip',
+            'image/jpeg' => 'jpg',
+            'image/png' => 'png',
+            'image/webp' => 'webp',
+        ],
+        'perfil_imagem' => 'original',
+        'autorizar' => null,
+        'permissao' => null,
     ],
 
     // Rotas prontas (Midia::rotas() dentro do grupo do painel). Com

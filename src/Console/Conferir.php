@@ -47,8 +47,28 @@ class Conferir extends Command
             $ok(is_link(public_path('storage')) || is_dir(public_path('storage')), 'public/storage aponta para o disco público', 'php artisan storage:link');
         }
 
+        $privado = (string) config('midia.arquivos.disco_privado', 'local');
+        $raiz = (string) config("filesystems.disks.{$privado}.root", '');
+        $ok(
+            $privado !== 'public' && ! in_array(config("filesystems.disks.{$privado}.visibility"), ['public'], true)
+                && ($raiz === '' || ! str_starts_with(realpath($raiz) ?: $raiz, realpath(public_path()) ?: public_path())),
+            "disco privado `{$privado}` fora da raiz web",
+            'aponte midia.arquivos.disco_privado para um disco local fora de public/ (o `local` do Laravel serve)',
+        );
+
+        $limiteArquivo = (int) config('midia.arquivos.limite_mb', 20) * 1024 ** 2;
+        foreach (['upload_max_filesize', 'post_max_size'] as $chave) {
+            $valor = (string) ini_get($chave);
+            if (self::bytes($valor) < $limiteArquivo) {
+                $this->line("  <comment>aviso</comment> {$chave} = {$valor} é menor que o limite de arquivo (".config('midia.arquivos.limite_mb', 20).' MB). Só importa se o sistema usa GuardarArquivo.');
+            }
+        }
+
         if (Escopo::obrigatorio()) {
             $ok(Escopo::temResolver(), 'escopo obrigatório e com resolver', 'defina midia.escopo.resolver ou Escopo::resolverCom()');
+            if (! \UrbanoDev\Midia\Midia::temAutorizador()) {
+                $this->line('  <comment>aviso</comment> sem midia.arquivos.autorizar: qualquer pessoa logada do mesmo cliente baixa qualquer arquivo privado dele. Se precisa de regra por registro (anexo de chamado), ligue.');
+            }
         } else {
             $this->line('  <comment>info</comment> sem escopo por cliente (certo para site pequeno; sistema multi-inquilino precisa ligar).');
         }
