@@ -156,12 +156,13 @@ import GaleriaDeImagens from '../../vendor/urbanodev/midia/resources/js/GaleriaD
 ```
 
 ```vue
-<CampoDeImagem v-model="form.capa" rotulo="Capa" perfil="capa"
+<CampoDeImagem v-model="form.capa" rotulo="Capa" perfil="capa" proporcao="1200 / 630"
     :url-lista="route('painel.midia.imagens')" :url-envio="route('painel.midia.enviar')" />
 ```
 
 `CampoDeImagem` devolve `{ uuid, url, descricao }` (ou `null`); mande o `uuid`
-ao servidor. `GaleriaDeImagens` sozinha emite `escolher` — serve para o editor
+ao servidor. `proporcao` (padrão `4 / 3`, formato do `aspect-ratio` do CSS) é a
+forma da prévia: passe a do `recorte` do perfil, senão a prévia corta a imagem. `GaleriaDeImagens` sozinha emite `escolher` — serve para o editor
 de texto inserir uma imagem. Os dois usam `<dialog>` nativo e CSS próprio. As
 cores vêm de `--midia-fundo`, `--midia-texto`, `--midia-suave`, `--midia-linha`,
 `--midia-destaque`, `--midia-erro`; sem elas, dos tokens em canais da casa

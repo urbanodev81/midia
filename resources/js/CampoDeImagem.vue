@@ -6,6 +6,7 @@
  * que chama $model->sincronizarMidias('<campo>', [$uuid]).
  *
  *   <CampoDeImagem v-model="form.capa" rotulo="Capa" perfil="capa"
+ *       proporcao="1200 / 630"
  *       :url-lista="route('painel.midia.imagens')" :url-envio="route('painel.midia.enviar')" />
  */
 import { ref } from 'vue';
@@ -22,6 +23,9 @@ const props = defineProps({
     ajuda: { type: String, default: '' },
     erro: { type: String, default: '' },
     obrigatorio: { type: Boolean, default: false },
+    // Proporção da prévia, no formato do CSS aspect-ratio. Use a do recorte do
+    // perfil (capa 1200×630 → "1200 / 630"), senão a prévia corta a imagem.
+    proporcao: { type: String, default: '4 / 3' },
 });
 
 const aberto = ref(false);
@@ -37,8 +41,8 @@ function escolher(imagem) {
     <div class="midia-campo" role="group" :aria-labelledby="id + '-rotulo'" :aria-describedby="ajuda || erro ? id + '-ajuda' : undefined">
         <span :id="id + '-rotulo'" class="mc-rotulo">{{ rotulo }}<span v-if="obrigatorio" aria-hidden="true"> *</span></span>
         <div class="mc-corpo">
-            <img v-if="modelo?.url" :src="modelo.url" :alt="modelo.descricao || ''" class="mc-previa" />
-            <span v-else class="mc-vazio">Nenhuma imagem</span>
+            <img v-if="modelo?.url" :src="modelo.url" :alt="modelo.descricao || ''" class="mc-previa" :style="{ aspectRatio: proporcao }" />
+            <span v-else class="mc-vazio" :style="{ aspectRatio: proporcao }">Nenhuma imagem</span>
             <div class="mc-acoes">
                 <button type="button" class="mc-botao" @click="aberto = true">{{ modelo ? 'Trocar' : 'Escolher imagem' }}</button>
                 <button v-if="modelo && !obrigatorio" type="button" class="mc-link" @click="modelo = null">Remover</button>
